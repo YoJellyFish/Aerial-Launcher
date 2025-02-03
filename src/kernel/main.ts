@@ -50,17 +50,26 @@ import { XPBoostsManager } from './core/xpboosts'
 import { MainWindow } from './startup/windows/main'
 import { AccountsManager } from './startup/accounts'
 import { Application } from './startup/application'
+import { AutoLlamas } from './startup/auto-llamas'
 import { AutoPinUrns } from './startup/auto-pin-urns'
 import { Automation } from './startup/automation'
 import { DataDirectory } from './startup/data-directory'
 import { GroupsManager } from './startup/groups'
 import {
+  AppLanguage,
   CustomizableMenuSettingsManager,
   DevSettingsManager,
   SettingsManager,
 } from './startup/settings'
 import { SystemTray } from './startup/system-tray'
 import { TagsManager } from './startup/tags'
+
+import {
+  AutoLlamasAccountAddParams,
+  AutoLlamasAccountUpdateParams,
+} from '../state/stw-operations/auto/llamas'
+
+import { Language } from '../locales/resources'
 
 dayjs.extend(localizedFormat)
 dayjs.extend(relativeTime)
@@ -162,6 +171,17 @@ const gotTheLock = app.requestSingleInstanceLock()
     /**
      * Settings
      */
+
+    ipcMain.on(ElectronAPIEventKeys.AppLanguageRequest, async () => {
+      await AppLanguage.load()
+    })
+
+    ipcMain.on(
+      ElectronAPIEventKeys.AppLanguageUpdate,
+      async (_, language: Language) => {
+        await AppLanguage.update(language)
+      }
+    )
 
     ipcMain.on(ElectronAPIEventKeys.RequestAccounts, async () => {
       await AccountsManager.load()
@@ -602,6 +622,38 @@ const gotTheLock = app.requestSingleInstanceLock()
       ElectronAPIEventKeys.UrnsServiceRemove,
       async (_, accountId: string) => {
         await AutoPinUrns.removeAccount(accountId)
+      }
+    )
+
+    /**
+     * Auto-llamas
+     */
+
+    ipcMain.on(
+      ElectronAPIEventKeys.AutoLlamasLoadAccountsRequest,
+      async () => {
+        await AutoLlamas.load()
+      }
+    )
+
+    ipcMain.on(
+      ElectronAPIEventKeys.AutoLlamasAccountAdd,
+      async (_, accounts: AutoLlamasAccountAddParams) => {
+        await AutoLlamas.addAccount(accounts)
+      }
+    )
+
+    ipcMain.on(
+      ElectronAPIEventKeys.AutoLlamasAccountUpdate,
+      async (_, data: AutoLlamasAccountUpdateParams) => {
+        await AutoLlamas.updateAccounts(data)
+      }
+    )
+
+    ipcMain.on(
+      ElectronAPIEventKeys.AutoLlamasAccountRemove,
+      async (_, data: Array<string> | null) => {
+        await AutoLlamas.removeAccounts(data)
       }
     )
 
